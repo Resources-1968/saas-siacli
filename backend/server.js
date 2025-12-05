@@ -11,6 +11,7 @@ app.use(express.json());
 const XLSX = require('xlsx');
 const fs = require('fs');
 const path = require('path');
+const PDFDocument = require('pdfkit');
 
 // --- DATA LOADING HELPER ---
 const loadExcel = (filename) => {
@@ -362,6 +363,44 @@ app.put('/api/operations/tasks/:id', (req, res) => {
     const { status } = req.body;
     tasksData = tasksData.map(t => t.id === id ? { ...t, status } : t);
     res.json({ success: true });
+});
+
+// Reports
+app.get('/api/reports/generate', (req, res) => {
+    const doc = new PDFDocument();
+    const filename = `Informe_SaaS_SIACLI_${Date.now()}.pdf`;
+
+    res.setHeader('Content-disposition', `attachment; filename="${filename}"`);
+    res.setHeader('Content-type', 'application/pdf');
+
+    doc.pipe(res);
+
+    // Header
+    doc.fontSize(25).text('Informe Ejecutivo SaaS-SIACLI', { align: 'center' });
+    doc.moveDown();
+    doc.fontSize(12).text(`Fecha: ${new Date().toLocaleDateString()}`, { align: 'center' });
+    doc.moveDown(2);
+
+    // Content - Opportunities
+    doc.fontSize(16).text('Resumen de Oportunidades (Top 5)', { underline: true });
+    doc.moveDown();
+    doc.fontSize(12);
+
+    opportunitiesData.slice(0, 5).forEach(op => {
+        doc.text(`• ${op.name}`);
+        doc.fontSize(10).text(`   Potencial: ${op.potential} | Score: ${op.value}/100`, { color: 'gray' });
+        doc.text(`   ${op.description}`);
+        doc.moveDown();
+        doc.fontSize(12).fillColor('black');
+    });
+
+    doc.moveDown();
+    doc.fontSize(16).text('Estado del Sistema', { underline: true });
+    doc.moveDown();
+    doc.fontSize(12).text(`Total Productos Activos: ${productsData.length}`);
+    doc.text(`Total Oportunidades Detectadas: ${opportunitiesData.length}`);
+
+    doc.end();
 });
 
 app.listen(port, () => {

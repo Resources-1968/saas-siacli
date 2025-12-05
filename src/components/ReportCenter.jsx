@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { FileText, BarChart, Activity, Leaf, Globe, Download, CheckCircle, Loader } from 'lucide-react';
+import { API_URL } from '../config/api';
 
 const reportTypes = [
     {
@@ -46,42 +47,48 @@ const ReportCenter = () => {
     const [completed, setCompleted] = useState(null);
     const [recentReports, setRecentReports] = useState([]);
 
-    const downloadFile = (title) => {
-        // Create a dummy text file
-        const element = document.createElement("a");
-        const file = new Blob([`Contenido del ${title}\n\nGenerado el: ${new Date().toLocaleString()}\n\nEste es un archivo simulado para demostración.`], { type: 'text/plain' });
-        element.href = URL.createObjectURL(file);
-        element.download = `${title.replace(/\s+/g, '_')}_${Date.now()}.txt`;
-        document.body.appendChild(element); // Required for this to work in FireFox
-        element.click();
-        document.body.removeChild(element);
+    const downloadFile = async (title) => {
+        try {
+            const response = await fetch(`${API_URL}/reports/generate`);
+            if (!response.ok) throw new Error('Error generating report');
+
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${title.replace(/\s+/g, '_')}_${Date.now()}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        } catch (error) {
+            console.error('Download failed:', error);
+            alert('Error al descargar el informe. Asegúrate de que el backend está funcionando.');
+        }
     };
 
-    const handleGenerate = (id) => {
+    const handleGenerate = async (id) => {
         setGenerating(id);
         setCompleted(null);
 
-        // Simulate PDF generation delay
-        setTimeout(() => {
-            setGenerating(null);
-            setCompleted(id);
+        const reportConfig = reportTypes.find(r => r.id === id);
 
-            // Add to history
-            const reportConfig = reportTypes.find(r => r.id === id);
-            const newReport = {
-                id: Date.now(),
-                title: reportConfig.title,
-                date: new Date().toLocaleString(),
-                type: reportConfig.id
-            };
-            setRecentReports(prev => [newReport, ...prev]);
+        await downloadFile(reportConfig.title);
 
-            // Trigger download
-            downloadFile(reportConfig.title);
+        setGenerating(null);
+        setCompleted(id);
 
-            // Auto-hide success message after 3 seconds
-            setTimeout(() => setCompleted(null), 3000);
-        }, 2000);
+        // Add to history
+        const newReport = {
+            id: Date.now(),
+            title: reportConfig.title,
+            date: new Date().toLocaleString(),
+            type: reportConfig.id
+        };
+        setRecentReports(prev => [newReport, ...prev]);
+
+        // Auto-hide success message after 3 seconds
+        setTimeout(() => setCompleted(null), 3000);
     };
 
     const container = {
