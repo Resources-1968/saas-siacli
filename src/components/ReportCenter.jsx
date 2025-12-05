@@ -47,9 +47,9 @@ const ReportCenter = () => {
     const [completed, setCompleted] = useState(null);
     const [recentReports, setRecentReports] = useState([]);
 
-    const downloadFile = async (title) => {
+    const downloadFile = async (title, type) => {
         try {
-            const response = await fetch(`${API_URL}/reports/generate`);
+            const response = await fetch(`${API_URL}/reports/generate?type=${type}`);
             if (!response.ok) throw new Error('Error generating report');
 
             const blob = await response.blob();
@@ -73,7 +73,7 @@ const ReportCenter = () => {
 
         const reportConfig = reportTypes.find(r => r.id === id);
 
-        await downloadFile(reportConfig.title);
+        await downloadFile(reportConfig.title, id);
 
         setGenerating(null);
         setCompleted(id);

@@ -367,38 +367,104 @@ app.put('/api/operations/tasks/:id', (req, res) => {
 
 // Reports
 app.get('/api/reports/generate', (req, res) => {
+    const { type } = req.query;
     const doc = new PDFDocument();
-    const filename = `Informe_SaaS_SIACLI_${Date.now()}.pdf`;
+    const filename = `Informe_${type ? type.toUpperCase() : 'GENERAL'}_${Date.now()}.pdf`;
 
     res.setHeader('Content-disposition', `attachment; filename="${filename}"`);
     res.setHeader('Content-type', 'application/pdf');
 
     doc.pipe(res);
 
-    // Header
-    doc.fontSize(25).text('Informe Ejecutivo SaaS-SIACLI', { align: 'center' });
+    // --- HEADER ---
+    let title = 'Informe Ejecutivo';
+    if (type === 'operational') title = 'Informe Operativo (Kanban)';
+    if (type === 'sustainability') title = 'Informe de Sostenibilidad (Retrofit)';
+    if (type === 'market') title = 'Inteligencia de Mercado';
+
+    doc.fontSize(25).text(title, { align: 'center' });
     doc.moveDown();
-    doc.fontSize(12).text(`Fecha: ${new Date().toLocaleDateString()}`, { align: 'center' });
+    doc.fontSize(12).text(`Fecha: ${new Date().toLocaleDateString()} | SaaS-SIACLI`, { align: 'center' });
     doc.moveDown(2);
 
-    // Content - Opportunities
-    doc.fontSize(16).text('Resumen de Oportunidades (Top 5)', { underline: true });
-    doc.moveDown();
-    doc.fontSize(12);
+    // --- CONTENT BASED ON TYPE ---
 
-    opportunitiesData.slice(0, 5).forEach(op => {
-        doc.text(`• ${op.name}`);
-        doc.fontSize(10).text(`   Potencial: ${op.potential} | Score: ${op.value}/100`, { color: 'gray' });
-        doc.text(`   ${op.description}`);
+    if (type === 'operational') {
+        doc.fontSize(16).text('Estado de Operaciones', { underline: true });
         doc.moveDown();
-        doc.fontSize(12).fillColor('black');
-    });
+        doc.fontSize(12);
 
-    doc.moveDown();
-    doc.fontSize(16).text('Estado del Sistema', { underline: true });
-    doc.moveDown();
-    doc.fontSize(12).text(`Total Productos Activos: ${productsData.length}`);
-    doc.text(`Total Oportunidades Detectadas: ${opportunitiesData.length}`);
+        // Group tasks by status
+        const tasksByStatus = { 'todo': [], 'in-progress': [], 'done': [] };
+        // Assuming tasksData exists (it's in memory in this file)
+        // Note: In a real app we would filter tasksData. For now we use the global variable.
+        if (typeof tasksData !== 'undefined') {
+            tasksData.forEach(t => {
+                if (tasksByStatus[t.status]) tasksByStatus[t.status].push(t);
+            });
+        }
+
+        doc.text(`Tareas Pendientes: ${tasksByStatus['todo'].length}`);
+        doc.text(`En Curso: ${tasksByStatus['in-progress'].length}`);
+        doc.text(`Completadas: ${tasksByStatus['done'].length}`);
+        doc.moveDown();
+
+        doc.fontSize(14).text('Detalle de Tareas en Curso:', { underline: false });
+        doc.moveDown(0.5);
+        tasksByStatus['in-progress'].forEach(t => {
+            doc.fontSize(10).text(`• [${t.priority.toUpperCase()}] ${t.title} - ${t.assignee}`);
+        });
+
+    } else if (type === 'sustainability') {
+        doc.fontSize(16).text('Análisis de Retrofit', { underline: true });
+        doc.moveDown();
+        doc.fontSize(12);
+        doc.text('Este informe detalla el impacto potencial de la renovación de equipos.');
+        doc.moveDown();
+
+        doc.fontSize(14).text('Productos Recomendados para Eficiencia:', { underline: false });
+        doc.moveDown(0.5);
+        productsData.filter(p => p.category === 'Energía' || p.category === 'Climatización').forEach(p => {
+            doc.fontSize(10).text(`• ${p.name}`);
+            doc.text(`  Características: ${p.features.join(', ')}`, { color: 'gray' });
+            doc.moveDown(0.5);
+        });
+
+    } else if (type === 'market') {
+        doc.fontSize(16).text('Inteligencia de Mercado', { underline: true });
+        doc.moveDown();
+        doc.fontSize(12);
+
+        doc.text('Análisis de competidores y saturación por región.');
+        doc.moveDown();
+
+        opportunitiesData.forEach(op => {
+            doc.text(`Región: ${op.name}`);
+            doc.fontSize(10).text(`Competencia: ${op.factors.competition}/100 | Mercado: ${op.factors.market}/100`);
+            doc.moveDown(0.5);
+            doc.fontSize(12);
+        });
+
+    } else {
+        // Default: Executive
+        doc.fontSize(16).text('Resumen de Oportunidades (Top 5)', { underline: true });
+        doc.moveDown();
+        doc.fontSize(12);
+
+        opportunitiesData.slice(0, 5).forEach(op => {
+            doc.text(`• ${op.name}`);
+            doc.fontSize(10).text(`   Potencial: ${op.potential} | Score: ${op.value}/100`, { color: 'gray' });
+            doc.text(`   ${op.description}`);
+            doc.moveDown();
+            doc.fontSize(12).fillColor('black');
+        });
+
+        doc.moveDown();
+        doc.fontSize(16).text('Estado del Sistema', { underline: true });
+        doc.moveDown();
+        doc.fontSize(12).text(`Total Productos Activos: ${productsData.length}`);
+        doc.text(`Total Oportunidades Detectadas: ${opportunitiesData.length}`);
+    }
 
     doc.end();
 });
