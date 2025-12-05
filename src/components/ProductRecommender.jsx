@@ -173,7 +173,7 @@ const ProductRecommender = () => {
             <motion.div variants={item} className="card" style={{ marginBottom: '2rem', padding: '1.5rem' }}>
                 <div className="flex items-end gap-4">
                     <div className="flex-col gap-2" style={{ flex: 1 }}>
-                        <label className="text-sm font-bold text-secondary">Región Objetivo</label>
+                        <label className="text-sm font-bold text-secondary">Región Objetivo ({availableRegions.length})</label>
                         <select
                             value={selectedRegion}
                             onChange={(e) => setSelectedRegion(e.target.value)}
