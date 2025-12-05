@@ -36,7 +36,7 @@ const ProductRecommender = () => {
                 const [productsData, nicheAnalysis, opportunities] = await Promise.all([
                     productsService.getAllProducts(),
                     productsService.getNicheAnalysis(),
-                    opportunitiesService.getAllOpportunities()
+                    opportunitiesService.getOpportunities()
                 ]);
                 setProducts(productsData);
                 setFilteredProducts(productsData);
