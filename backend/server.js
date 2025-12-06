@@ -336,6 +336,10 @@ app.get('/api/products/niche', (req, res) => {
     res.json(nicheData);
 });
 
+app.get('/api/products/niche-analysis', (req, res) => {
+    res.json(nicheData);
+});
+
 // Opportunities
 app.get('/api/opportunities', (req, res) => {
     res.json(opportunitiesData);
