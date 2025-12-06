@@ -12,6 +12,7 @@ const XLSX = require('xlsx');
 const fs = require('fs');
 const path = require('path');
 const PDFDocument = require('pdfkit');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 // --- DATA LOADING HELPER ---
 const loadExcel = (filename) => {
@@ -295,6 +296,188 @@ app.post('/api/auth/login', (req, res) => {
             success: false,
             message: 'Credenciales inválidas. Verifique su email y contraseña.'
         });
+    }
+});
+
+// --- AI ENDPOINTS ---
+
+// Initialize Gemini AI
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
+const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+
+// AI: Generate product description
+app.post('/api/ai/generate-description', async (req, res) => {
+    try {
+        const { productName, category, features } = req.body;
+
+        const prompt = `Eres un experto en redacción de descripciones comerciales para productos industriales HVAC.
+
+PRODUCTO:
+- Nombre: ${productName}
+- Categoría: ${category}
+- Características técnicas: ${features.join(', ')}
+
+TAREA:
+Genera una descripción comercial profesional y persuasiva en español para este producto.
+
+REQUISITOS:
+- Máximo 120 palabras
+- Enfoque en beneficios para el cliente
+- Lenguaje técnico pero accesible
+- Incluye aplicaciones típicas
+- Formato: JSON con campo "description"
+
+FORMATO DE SALIDA:
+{
+  "description": "Texto de la descripción aquí..."
+}`;
+
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        const text = response.text();
+
+        // Try to parse JSON, fallback to plain text
+        try {
+            const jsonMatch = text.match(/\{[\s\S]*\}/);
+            const jsonData = jsonMatch ? JSON.parse(jsonMatch[0]) : { description: text };
+            res.json({ success: true, ...jsonData });
+        } catch {
+            res.json({ success: true, description: text });
+        }
+    } catch (error) {
+        console.error('AI Description Error:', error);
+        res.status(500).json({ success: false, message: 'Error generando descripción con IA' });
+    }
+});
+
+// AI: Generate sales strategy
+app.post('/api/ai/generate-strategy', async (req, res) => {
+    try {
+        const { region, sector, opportunities, competitors } = req.body;
+
+        const prompt = `Eres un experto en estrategia comercial B2B para el sector HVAC en España.
+
+CONTEXTO:
+- Región objetivo: ${region}
+- Sector: ${sector}
+- Oportunidades identificadas: ${opportunities}
+- Competidores principales: ${competitors || 'No especificados'}
+
+TAREA:
+Genera una estrategia de venta concreta y accionable.
+
+REQUISITOS:
+- Máximo 200 palabras
+- 3-5 acciones específicas
+- Timeline realista
+- Basado en el contexto proporcionado
+
+FORMATO DE SALIDA (JSON):
+{
+  "focus": "Foco principal de la estrategia (1 frase)",
+  "keyActions": ["Acción 1", "Acción 2", "Acción 3"],
+  "timing": "Timeline de ejecución",
+  "expectedROI": "ROI estimado o beneficio esperado"
+}`;
+
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        const text = response.text();
+
+        try {
+            const jsonMatch = text.match(/\{[\s\S]*\}/);
+            const jsonData = jsonMatch ? JSON.parse(jsonMatch[0]) : {
+                focus: text.substring(0, 100),
+                keyActions: ['Analizar datos proporcionados'],
+                timing: '1-3 meses',
+                expectedROI: 'Por determinar'
+            };
+            res.json({ success: true, strategy: jsonData });
+        } catch {
+            res.json({ success: false, message: 'Error parseando respuesta de IA' });
+        }
+    } catch (error) {
+        console.error('AI Strategy Error:', error);
+        res.status(500).json({ success: false, message: 'Error generando estrategia con IA' });
+    }
+});
+
+// AI: Predict demand
+app.post('/api/ai/predict-demand', async (req, res) => {
+    try {
+        const { region, historicalData } = req.body;
+
+        const prompt = `Eres un analista de datos especializado en predicción de demanda para productos industriales.
+
+DATOS HISTÓRICOS:
+Región: ${region}
+Datos: ${JSON.stringify(historicalData)}
+
+TAREA:
+Predice la demanda para los próximos 3 meses.
+
+FORMATO DE SALIDA (JSON):
+{
+  "predictions": [
+    {"month": "Mes 1", "value": 1234, "confidence": 85},
+    {"month": "Mes 2", "value": 1456, "confidence": 78},
+    {"month": "Mes 3", "value": 1567, "confidence": 70}
+  ],
+  "trend": "up/down/stable",
+  "insights": "Breve análisis de factores que influyen"
+}`;
+
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        const text = response.text();
+
+        try {
+            const jsonMatch = text.match(/\{[\s\S]*\}/);
+            const jsonData = jsonMatch ? JSON.parse(jsonMatch[0]) : {
+                predictions: [],
+                trend: 'stable',
+                insights: 'Datos insuficientes para predicción'
+            };
+            res.json({ success: true, ...jsonData });
+        } catch {
+            res.json({ success: false, message: 'Error parseando predicción' });
+        }
+    } catch (error) {
+        console.error('AI Prediction Error:', error);
+        res.status(500).json({ success: false, message: 'Error prediciendo demanda' });
+    }
+});
+
+// AI: Chat assistant
+app.post('/api/ai/chat', async (req, res) => {
+    try {
+        const { message, context } = req.body;
+
+        const prompt = `Eres un asistente virtual experto en análisis de datos comerciales para una empresa HVAC española.
+
+CONTEXTO DE LA APLICACIÓN:
+${context ? JSON.stringify(context) : 'Usuario consulta información general'}
+
+PREGUNTA DEL USUARIO:
+${message}
+
+INSTRUCCIONES:
+- Responde en español de forma clara y concisa
+- Usa los datos del contexto cuando sea relevante
+- Si no tienes información suficiente, indícalo
+- Máximo 150 palabras
+- Formato profesional pero amigable
+
+Responde directamente sin formato JSON.`;
+
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        const text = response.text();
+
+        res.json({ success: true, message: text });
+    } catch (error) {
+        console.error('AI Chat Error:', error);
+        res.status(500).json({ success: false, message: 'Error en el asistente virtual' });
     }
 });
 

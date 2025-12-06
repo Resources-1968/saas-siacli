@@ -12,8 +12,9 @@ import RetrofitCalculator from './components/RetrofitCalculator';
 import ReportCenter from './components/ReportCenter';
 import Settings from './components/Settings';
 import Login from './components/Login';
+import ChatAssistant from './components/ChatAssistant';
 import './App.css';
-import { Bell, Search, User, Sun, Moon } from 'lucide-react';
+import { Bell, Search, User, Sun, Moon, Sparkles } from 'lucide-react';
 
 function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -70,6 +71,12 @@ function App() {
           </div>
 
           <div className="flex items-center gap-4" style={{ marginRight: '1.5rem' }}>
+            {/* AI Powered Badge */}
+            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-purple-500/20 to-blue-500/20 border border-purple-400/30 rounded-lg">
+              <Sparkles size={16} className="text-purple-400" />
+              <span className="text-xs font-medium text-purple-300">AI Powered</span>
+            </div>
+
             <button style={{ position: 'relative' }}>
               <Bell size={20} className="text-secondary" />
               <span style={{ position: 'absolute', top: -2, right: -2, width: '8px', height: '8px', background: 'var(--color-danger)', borderRadius: '50%' }}></span>
@@ -105,6 +112,9 @@ function App() {
         {activeTab === 'reports' && <ReportCenter />}
         {activeTab === 'settings' && <Settings autoUpdate={autoUpdate} setAutoUpdate={setAutoUpdate} />}
       </main>
+
+      {/* AI Chat Assistant - Always visible */}
+      <ChatAssistant />
     </div>
   );
 }
