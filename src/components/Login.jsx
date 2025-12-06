@@ -26,7 +26,7 @@ const Login = ({ onLogin }) => {
             const data = await response.json();
 
             if (response.ok && data.success) {
-                onLogin(email);
+                onLogin(data.user);  // Pass full user data from backend
             } else {
                 setError(data.message || 'Credenciales inválidas. Verifique su email y contraseña.');
                 setIsLoading(false);

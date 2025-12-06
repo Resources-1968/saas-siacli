@@ -36,10 +36,9 @@ function App() {
     console.log('Searching for:', e.target.value);
   };
 
-  const handleLogin = (email) => {
-    const role = email.startsWith('admin') ? 'admin' : 'viewer';
-    const name = role === 'admin' ? 'Administrador' : 'Invitado';
-    setUser({ name, email, role });
+  const handleLogin = (userData) => {
+    // userData comes from backend with { id, name, email, role }
+    setUser(userData);
     setIsAuthenticated(true);
   };
 
