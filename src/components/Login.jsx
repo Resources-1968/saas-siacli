@@ -15,9 +15,9 @@ const Login = ({ onLogin }) => {
 
         // Simulate network request
         setTimeout(() => {
-            // Validate specific credentials
-            const validEmail = 'rurces11@gmail.com';
-            const validPassword = 'siacli2026$$$';
+            // Get credentials from environment variables
+            const validEmail = import.meta.env.VITE_LOGIN_EMAIL;
+            const validPassword = import.meta.env.VITE_LOGIN_PASSWORD;
 
             if (email === validEmail && password === validPassword) {
                 onLogin(email);
