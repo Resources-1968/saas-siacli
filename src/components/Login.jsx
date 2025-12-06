@@ -15,11 +15,14 @@ const Login = ({ onLogin }) => {
 
         // Simulate network request
         setTimeout(() => {
-            // Simple mock validation
-            if (email && password.length > 3) {
+            // Validate specific credentials
+            const validEmail = 'rurces11@gmail.com';
+            const validPassword = 'siacli2026$$$';
+
+            if (email === validEmail && password === validPassword) {
                 onLogin(email);
             } else {
-                setError('Credenciales inválidas. Intente de nuevo.');
+                setError('Credenciales inválidas. Verifique su email y contraseña.');
                 setIsLoading(false);
             }
         }, 1000);
