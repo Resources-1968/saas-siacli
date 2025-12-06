@@ -214,6 +214,17 @@ if (rawStrategies) {
     };
 }
 
+// Niche Analysis Data
+const nicheData = [
+    { name: 'Oficinas Madrid', x: 85, y: 45, color: '#10b981', potential: 'Alto' },
+    { name: 'Hospitales', x: 75, y: 60, color: '#ef4444', potential: 'Medio' },
+    { name: 'Hoteles Costa', x: 80, y: 35, color: '#10b981', potential: 'Alto' },
+    { name: 'Industria Norte', x: 70, y: 55, color: '#f59e0b', potential: 'Medio' },
+    { name: 'Logística', x: 65, y: 40, color: '#f59e0b', potential: 'Medio' },
+    { name: 'Retail', x: 55, y: 70, color: '#6366f1', potential: 'Bajo' },
+    { name: 'Educación', x: 60, y: 50, color: '#f59e0b', potential: 'Medio' }
+];
+
 const dashboardData = {
     projection: [
         { name: 'Ene 26', value: 4200 },
