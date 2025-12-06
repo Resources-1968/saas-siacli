@@ -8,24 +8,34 @@ const Login = ({ onLogin }) => {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
         setIsLoading(true);
 
-        // Simulate network request
-        setTimeout(() => {
-            // Get credentials from environment variables
-            const validEmail = import.meta.env.VITE_LOGIN_EMAIL;
-            const validPassword = import.meta.env.VITE_LOGIN_PASSWORD;
+        try {
+            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+            const response = await fetch(`${API_URL}/auth/login`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email, password }),
+            });
 
-            if (email === validEmail && password === validPassword) {
+            const data = await response.json();
+
+            if (response.ok && data.success) {
                 onLogin(email);
             } else {
-                setError('Credenciales inválidas. Verifique su email y contraseña.');
+                setError(data.message || 'Credenciales inválidas. Verifique su email y contraseña.');
                 setIsLoading(false);
             }
-        }, 1000);
+        } catch (error) {
+            console.error('Login error:', error);
+            setError('Error de conexión. Intente nuevamente.');
+            setIsLoading(false);
+        }
     };
 
     return (

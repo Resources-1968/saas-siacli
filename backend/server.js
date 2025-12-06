@@ -275,12 +275,26 @@ let tasksData = [
 // Auth
 app.post('/api/auth/login', (req, res) => {
     const { email, password } = req.body;
-    if (email === 'admin@test.com') {
-        res.json({ id: 1, name: 'Admin User', email, role: 'admin' });
-    } else if (email === 'guest@test.com') {
-        res.json({ id: 2, name: 'Guest User', email, role: 'viewer' });
+
+    // Get credentials from environment variables
+    const validEmail = process.env.LOGIN_EMAIL || 'admin@test.com';
+    const validPassword = process.env.LOGIN_PASSWORD || 'admin123';
+
+    if (email === validEmail && password === validPassword) {
+        res.json({
+            success: true,
+            user: {
+                id: 1,
+                name: 'Usuario Principal',
+                email,
+                role: 'admin'
+            }
+        });
     } else {
-        res.status(401).json({ message: 'Credenciales inválidas' });
+        res.status(401).json({
+            success: false,
+            message: 'Credenciales inválidas. Verifique su email y contraseña.'
+        });
     }
 });
 
