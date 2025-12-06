@@ -280,13 +280,6 @@ app.post('/api/auth/login', (req, res) => {
     const validEmail = process.env.LOGIN_EMAIL || 'admin@test.com';
     const validPassword = process.env.LOGIN_PASSWORD || 'admin123';
 
-    // Debug log (remove after testing)
-    console.log('Login attempt:', {
-        receivedEmail: email,
-        expectedEmail: validEmail,
-        passwordMatch: password === validPassword
-    });
-
     if (email === validEmail && password === validPassword) {
         res.json({
             success: true,
